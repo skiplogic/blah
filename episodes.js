@@ -22,7 +22,7 @@ exports.killOne = (epnum1)=>{
 		episodes.findIndex( 
 			function(episode){
 				return episode.epnum === epnum1;
-			}, 1));
+			}), 1);
 	return {psycho: "killer"};
 }
 
