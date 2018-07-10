@@ -1,43 +1,52 @@
-var http = require('http');
-var fs = require('fs');
+var http = require("http"); 
+var fs = require("fs");
+var episodes = require("./episodes");
 var url = require('url');
 
-// Create a server
-http.createServer( function (request, response) {  
-   // Parse the request containing file name
-   var pathname = url.parse(request.url).pathname;
-   
-   // Print the name of the file for which request is made.
-   console.log("Request for " + pathname + " received.");
+http.createServer(function(req,res) {
+  //var path = url.toLowerCase();
+  var pathname = url.parse(req.url).pathname;
 
-   if(pathname == "/"){
-      pathname = "/public/home.html";
-   } else if (pathname == "/about") {
-      pathname = "/package.json"
-   } else {
-      pathname = "error 404"
-   }
-   
-   // Read the requested file content from file system
-   fs.readFile(pathname.substr(1), function (err, data) {
-      if (err) {
-         console.log(err);
-         // HTTP Status: 404 : NOT FOUND
-         // Content Type: text/plain
-         response.writeHead(404, {'Content-Type': 'text/html'});
-      }else {	
-         //Page found	  
-         // HTTP Status: 200 : OK
-         // Content Type: text/plain
-         response.writeHead(200, {'Content-Type': 'text/html'});	
-         
-         // Write the content of the file to response body
-         response.write(data.toString());		
+  switch(pathname) {
+
+    case '/':
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.write(JSON.stringify(episodes.getAll()));
+      res.end();
+      
+      break;
+      
+    case '/get':
+
+      // parse the query string
+      var thisquery = url.parse(req.url, true).query;
+
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      if(episodes.getOne(thisquery.epnum)) {
+        res.write(JSON.stringify(episodes.getOne(thisquery.epnum)));
+      } else {
+        res.writeHead(404, {'Content-Type': 'text/plain'});
+        res.write(JSON.stringify({wat:'Not an episode.'}));
+        res.end();
       }
-      // Send the response body 
-      response.end();
-   });   
-}).listen(3000);
+      res.end();
 
-// Console will print the message
-console.log('Server running at http://127.0.0.1:3000/');
+      break;
+
+    case '/kill':
+
+      // parse the query string
+      var thisquery = url.parse(req.url, true).query;
+
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.write(JSON.stringify(episodes.killOne(thisquery.epnum)));
+      res.end();
+
+      break;
+
+    default:
+      res.writeHead(404, {'Content-Type': 'text/plain'});
+      res.end('Not found');
+      break;
+    }
+}).listen(process.env.PORT || 3000);
